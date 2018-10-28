@@ -49,11 +49,13 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	int width, height;
 	double[][] m;    // richtige Kombination der Basisbilder (0/1) 
 	double[][] mInv; // Kombination der Eingangsbilder zur Erzeugung der Basisbilder
-	double [] wUser = new double[numPics];; // Kombination des Nutzers
+	double [] wUser = new double[numPics];; // Kombination des Nutzers (selected pictures by mouse click)
+	//double [] wUser = new double[4];
+	
 	Random rand = new Random(1112); 
 	
 	int targetPixels[][];  //if (doGenerate==true) then targetPixesl[][] are simply the loaded images
-	BufferedImage[] loadedTargetImages;
+	BufferedImage[] targetImagesFromeFiles;
 	
 	private double[][][] basisPixels3;    // Speicher für Basisbilder [Bildnummer][Position][Kanal]
 	private BufferedImage[] basisImages;
@@ -62,7 +64,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	public Display() {
 		super();
 
-		loadedTargetImages = new BufferedImage[numPics];
+		targetImagesFromeFiles = new BufferedImage[numPics];
 
 		this.setFocusable(true);
 		this.requestFocusInWindow();
@@ -77,15 +79,15 @@ class Display extends JPanel implements MouseListener, KeyListener {
 				for (int i = 0; i < numPics; i++) {
 					//String imageName = imageNames[i+imageSet*5];
 					//targetImages[i] = ImageIO.read(new File("pics/"+imageName));
-					loadedTargetImages[i] = ImageIO.read(new File("pics/"+imageNames[i+imageSet*5]));
+					targetImagesFromeFiles[i] = ImageIO.read(new File("pics/"+imageNames[i+imageSet*5]));
 				}
 			} catch (IOException e) {
 				e.printStackTrace(); 
 			}				
 
 			//get width & height. it doesn't matter from which picture you get them.
-			width = loadedTargetImages[0].getWidth();
-			height = loadedTargetImages[0].getHeight();
+			width = targetImagesFromeFiles[0].getWidth();
+			height = targetImagesFromeFiles[0].getHeight();
 
 			
 			// Lesen der Pixeldaten. set pixels into targetPixels[i] from loadedTargetImages[i] 
@@ -99,7 +101,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 				//set pixels into targetPixels[i] from loadedTargetImages[i] 
 				//targetImages[i].getRGB(0, 0, width, height, targetPixels[i], 0, width);
 				// oder
-				targetPixels[i] = loadedTargetImages[i].getRGB(0, 0, width, height, null, 0, width);
+				targetPixels[i] = targetImagesFromeFiles[i].getRGB(0, 0, width, height, null, 0, width);
 				
 				//this doesn't work as intended -> 動いていることは動いている。ロードしたtargetImages[i]が緑に上書きされている。しかし、これは望んでいないこと。反対のことをやりたい。
 				//targetImages[i].setRGB(0, 0, width, height, targetPixels[i], 0, width);
@@ -158,8 +160,8 @@ class Display extends JPanel implements MouseListener, KeyListener {
 
 			for (int i = 0; i < targetPixels.length; i++) {
 				targetPixels[i] = blend3DDoubleToPixels(basisPixels3, m[i]);
-				loadedTargetImages[i] =  new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-				loadedTargetImages[i].setRGB(0, 0, width, height, targetPixels[i], 0, width);
+				targetImagesFromeFiles[i] =  new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+				targetImagesFromeFiles[i].setRGB(0, 0, width, height, targetPixels[i], 0, width);
 			}
 		}
 		printResult();
@@ -256,7 +258,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	
 	private void doDrawing(Graphics g) {
 
-		if (loadedTargetImages[0] == null) 
+		if (targetImagesFromeFiles[0] == null) 
 			return;
 
 		int[] pixelsBlended;
@@ -279,7 +281,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		g2d.setStroke(new BasicStroke(5)); 
 
 		for (int i = 0; i < numPics; i++) {
-			g2d.drawImage(loadedTargetImages[i],   null, bx+ i*(height+bx), by);
+			g2d.drawImage(targetImagesFromeFiles[i],   null, bx+ i*(height+bx), by);
 			g2d.drawImage(basisImages[i], null, bx+i*(height+bx), height+2*by);
 			if (wUser[i] > 0) g2d.drawRect(bx+i*(height+bx), height+2*by, height, height);
 		}
@@ -472,6 +474,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 
 		repaint();
 	}
+	
 
 	@Override
 	public void mouseEntered(MouseEvent arg0) {}
