@@ -465,12 +465,13 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	@Override
 	public void mouseClicked(MouseEvent arg0) {
 
-		int i = arg0.getX()/(width+10); // Spalte = Bassisbildnummer
+		int clickedPictureNumber = arg0.getX()/(width+10); // Spalte = Bassisbildnummer
+		System.out.println("picture position: " + clickedPictureNumber);
 
-		if (wUser[i] > 0) 
-			wUser[i] = 0; // löschen
+		if (wUser[clickedPictureNumber] > 0) 
+			wUser[clickedPictureNumber] = 0; // löschen  // 0 means not selected
 		else 
-			wUser[i] = 1; // setzen
+			wUser[clickedPictureNumber] = 1; // setzen // 1 means selected
 
 		repaint();
 	}
