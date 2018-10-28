@@ -26,7 +26,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 
 	// true: generiere Basisbilder, die die gelesenen Eingangsbilder erzeugen  //読み込みと同時に2段目に合成画像を生成する。それらをBasis Bilderとして用いる。重ね合わせることで本来の入力画像と同様の画像を得られる。入力画像は1段目に表示される。
 	// false: verwende die Bilder als Basisbilder und erzeuge Kombinatioen //読み込んだ画像を2段めのBasic Bilderとしてそのまま使用し、1段目は生成する。
-	boolean doGenerate = true;
+	boolean doGenerate = false;
 
 	// 0.51 .. 2.01 // wie stark darf ein Bild in der Linearkombination verwendet werden //default==2
 	double maxWeight = 2; //how does it work? looks like no differences
@@ -51,12 +51,12 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	double[][] mInv; // Kombination der Eingangsbilder zur Erzeugung der Basisbilder
 	double [] wUser = new double[numPics];; // Kombination des Nutzers (selected pictures by mouse click)
 	//double [] wUser = new double[4];
-	
+
 	Random rand = new Random(1112); 
-	
+
 	int targetPixels[][];  //if (doGenerate==true) then targetPixesl[][] are simply the loaded images
 	BufferedImage[] targetImagesFromeFiles;
-	
+
 	private double[][][] basisPixels3;    // Speicher für Basisbilder [Bildnummer][Position][Kanal]
 	private BufferedImage[] basisImages;
 
@@ -89,23 +89,24 @@ class Display extends JPanel implements MouseListener, KeyListener {
 			width = targetImagesFromeFiles[0].getWidth();
 			height = targetImagesFromeFiles[0].getHeight();
 
-			
+
 			// Lesen der Pixeldaten. set pixels into targetPixels[i] from loadedTargetImages[i] 
 			targetPixels = new int[numPics][width*height]; 	
 			for (int i = 0; i < numPics; i++) {		
-				
+
 				//fill black for debug
 				//Arrays.fill(targetPixels[i], 0xFF000000); //black
 				Arrays.fill(targetPixels[i], 0xFF00FF00); //green
-				
+
 				//set pixels into targetPixels[i] from loadedTargetImages[i] 
 				//targetImages[i].getRGB(0, 0, width, height, targetPixels[i], 0, width);
 				// oder
 				targetPixels[i] = targetImagesFromeFiles[i].getRGB(0, 0, width, height, null, 0, width);
-				
+
 				//this doesn't work as intended -> 動いていることは動いている。ロードしたtargetImages[i]が緑に上書きされている。しかし、これは望んでいないこと。反対のことをやりたい。
 				//targetImages[i].setRGB(0, 0, width, height, targetPixels[i], 0, width);
 			}
+			calculateBasisImages();
 		}
 
 		else {	// read image data and use them for basis images 
@@ -119,14 +120,59 @@ class Display extends JPanel implements MouseListener, KeyListener {
 			}
 			width = basisImages[0].getWidth();
 			height = basisImages[0].getHeight();
+			
+			calculateTargetImages();
+		}
+
+		//for both mode
+		//calculateBasisAndTargetImages();
+	}
+
+
+	private void calculateBasisImages() {
+		findCombinations();   // finde eine Konfiguration m mit Zeilensummen von minv > 0 
+
+		int[][] pixelsBasis = new int[numPics][];
+		basisPixels3 = new double[numPics][][];  // basisPixels3[Bildnummer][Position][Kanal]
+
+		basisImages = new BufferedImage[numPics];    // Basisbilder zum Anzeigen
+		for (int i = 0; i < numPics; i++) {
+			basisPixels3[i] = blendPixelsTo3DDoubleImage(targetPixels, mInv[i]);
+			pixelsBasis[i]  = blendPixelsToPixels(targetPixels, mInv[i]);
+
+			basisImages[i] = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB); 	//initialize BufferedImage for eachbasisImages[i]
+			basisImages[i].setRGB(0, 0, width, height, pixelsBasis[i], 0, width); //set RGB values from pixelsBasis[i] to the BufferedImages
+		}
+		printResult();
+	}
+
+	private void calculateTargetImages() {
+		mInv = new double[numPics][numPics];
+		int[][] pixelsBasis = new int[numPics][width*height];
+		for (int i = 0; i < numPics; i++) {
+			mInv[i][i] = 1; //1./numOnes;
+			basisPixels3 = new double[numPics][][];
+			basisImages[i].getRGB(0, 0, width, height, pixelsBasis[i], 0, width);
+		}
+		for (int i = 0; i < numPics; i++) 
+			basisPixels3[i] = blendPixelsTo3DDoubleImage(pixelsBasis, mInv[i]);
+
+		generateRandomM();
+
+		targetPixels = new int[numPics][width*height];
+
+		for (int i = 0; i < targetPixels.length; i++) {
+			targetPixels[i] = blend3DDoubleToPixels(basisPixels3, m[i]);
+			targetImagesFromeFiles[i] =  new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+			targetImagesFromeFiles[i].setRGB(0, 0, width, height, targetPixels[i], 0, width);
 		}
 		
-		//for both mode
-		calculateBasisAndTargetImages();
+		printResult();
 	}
-	
 
-	private void calculateBasisAndTargetImages() {
+
+
+	private void calculateBasisAndTargetImages00() {
 		if (doGenerate == true) { 	// generate basis from input images
 			findCombinations();   // finde eine Konfiguration m mit Zeilensummen von minv > 0 
 
@@ -137,12 +183,12 @@ class Display extends JPanel implements MouseListener, KeyListener {
 			for (int i = 0; i < numPics; i++) {
 				basisPixels3[i] = blendPixelsTo3DDoubleImage(targetPixels, mInv[i]);
 				pixelsBasis[i]  = blendPixelsToPixels(targetPixels, mInv[i]);
-				
+
 				basisImages[i] = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB); 	//initialize BufferedImage for eachbasisImages[i]
 				basisImages[i].setRGB(0, 0, width, height, pixelsBasis[i], 0, width); //set RGB values from pixelsBasis[i] to the BufferedImages
 			}
 		}
-		
+
 		else {	//generate target from input images 
 			mInv = new double[numPics][numPics];
 			int[][] pixelsBasis = new int[numPics][width*height];
@@ -166,7 +212,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		}
 		printResult();
 	}
-	
+
 
 	private void findCombinations() {
 		boolean success;
@@ -239,7 +285,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 			}
 			System.out.println();
 		}
-		
+
 		System.out.println();
 		System.out.println("Zusammensetzung der Basisbilder aus den Eingangsbildern:");
 		for (int i = 0; i < mInv.length; i++) {
@@ -255,44 +301,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	}
 
 
-	
-	private void doDrawing(Graphics g) {
 
-		if (targetImagesFromeFiles[0] == null) 
-			return;
-
-		int[] pixelsBlended;
-		Graphics2D g2d = (Graphics2D) g;
-		g2d.setColor(Color.LIGHT_GRAY);
-		Dimension size = getSize();
-		g2d.fillRect(0, 0, size.width, size.height);
-
-		int bx = 10, by = 30;
-		g2d.setColor(Color.BLACK);
-
-		String str1 = "Erzeuge jedes dieser Bilder ...   (neue Kombination durch Tastendruck)";
-		g2d.drawString(str1, 30, 20);
-		String str2 = "durch die Überlagerung von " + numOnes + " dieser Bilder. Selektiere sie durch Klicks mit der Maus.";
-		g2d.drawString(str2, 30, 20 + height + by);
-		String str3 = "Resultierende Überlagerung:";
-		g2d.drawString(str3, 30, 20 + 2*height + 2*by);
-
-		g2d.setColor(Color.RED);
-		g2d.setStroke(new BasicStroke(5)); 
-
-		for (int i = 0; i < numPics; i++) {
-			g2d.drawImage(targetImagesFromeFiles[i],   null, bx+ i*(height+bx), by);
-			g2d.drawImage(basisImages[i], null, bx+i*(height+bx), height+2*by);
-			if (wUser[i] > 0) g2d.drawRect(bx+i*(height+bx), height+2*by, height, height);
-		}
-
-		// Erzeugtes Bild
-		pixelsBlended = blend3DDoubleToPixels(basisPixels3, wUser);
-
-		BufferedImage imgBlended =  new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-		imgBlended.setRGB(0, 0, width, height, pixelsBlended, 0, width);
-		g2d.drawImage(imgBlended, null, bx, 2*height + 3*by);
-	}
 
 	/*
 	 * Kombiniert mehrere Bilder zu einem, Gewichtungen in w
@@ -350,6 +359,8 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		return pixels;
 	}
 
+	//not used
+	/*
 	private int[] blend3DDoubleToPixelsOrig(double[][][] pixelsIn, double[] w) {
 		int[] pixels = new int[pixelsIn[0].length];
 
@@ -373,6 +384,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		}
 		return pixels;
 	}
+	 */
 
 
 	private int[] blend3DDoubleToPixels(double[][][] pixelsIn, double[] w) {
@@ -411,7 +423,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 
 		System.out.println("rMin, rMax, gMin, gMax, bMin, bMax");
 		System.out.println(rMin + "," + rMax + ", " + gMin + "," + gMax + ", " + bMin + "," + bMax );
-		
+
 		System.out.println("min,max");
 		System.out.println(min + "," + max);
 
@@ -446,7 +458,6 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	}
 
 	int zeroLevel = 128;
-
 	double f(double val) {
 		return  val - zeroLevel;
 	}
@@ -475,7 +486,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 
 		repaint();
 	}
-	
+
 
 	@Override
 	public void mouseEntered(MouseEvent arg0) {}
@@ -493,7 +504,14 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	@Override
 	public void keyPressed(KeyEvent e) {
 		System.out.println("Neue Kombination");
-		calculateBasisAndTargetImages();
+		//calculateBasisAndTargetImages();
+		
+		if (doGenerate) {
+			calculateBasisImages(); 
+		} else {
+			calculateTargetImages();
+		}
+		
 		wUser = new double[numPics];
 		repaint();
 	}
@@ -505,5 +523,46 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	@Override
 	public void keyTyped(KeyEvent e) {
 	}
+
+	private void doDrawing(Graphics g) {
+
+		if (targetImagesFromeFiles[0] == null) 
+			return;
+
+		int[] pixelsBlended;
+		Graphics2D g2d = (Graphics2D) g;
+		g2d.setColor(Color.LIGHT_GRAY);
+		Dimension size = getSize();
+		g2d.fillRect(0, 0, size.width, size.height);
+
+		int bx = 10, by = 30;
+		g2d.setColor(Color.BLACK);
+
+		String str1 = "Erzeuge jedes dieser Bilder ...   (neue Kombination durch Tastendruck)";
+		g2d.drawString(str1, 30, 20);
+		String str2 = "durch die Überlagerung von " + numOnes + " dieser Bilder. Selektiere sie durch Klicks mit der Maus.";
+		g2d.drawString(str2, 30, 20 + height + by);
+		String str3 = "Resultierende Überlagerung:";
+		g2d.drawString(str3, 30, 20 + 2*height + 2*by);
+
+		g2d.setColor(Color.RED);
+		g2d.setStroke(new BasicStroke(5)); 
+
+		for (int i = 0; i < numPics; i++) {
+			g2d.drawImage(targetImagesFromeFiles[i],   null, bx+ i*(height+bx), by);
+			g2d.drawImage(basisImages[i], null, bx+i*(height+bx), height+2*by);
+			if (wUser[i] > 0) g2d.drawRect(bx+i*(height+bx), height+2*by, height, height);
+		}
+
+		// Erzeugtes Bild
+		pixelsBlended = blend3DDoubleToPixels(basisPixels3, wUser);
+
+		BufferedImage imgBlended =  new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		imgBlended.setRGB(0, 0, width, height, pixelsBlended, 0, width);
+		g2d.drawImage(imgBlended, null, bx, 2*height + 3*by);
+	}
+
+
+
 }
 
