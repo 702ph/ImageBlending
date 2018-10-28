@@ -77,12 +77,15 @@ class Display extends JPanel implements MouseListener, KeyListener {
 
 			loadTargetImageFromFile();
 			createTargetPixels();
+			
+			//findCombinations();   // finde eine Konfiguration m mit Zeilensummen von minv > 0 
 			calculateBasisImages();
-		}
-
-		else {	 	//use loaded images as basis images
+			//printResult();
+		
+		} else {	 	//use loaded images as basis images
 			loadBasisImageFromFile();
 			calculateTargetImages();
+			//printResult();
 		}
 
 		//for both mode
@@ -141,7 +144,8 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		height = targetImagesFromFile[0].getHeight();
 	}
 
-
+	
+	//for generate basis from input images
 	private void calculateBasisImages() {
 		findCombinations();   // finde eine Konfiguration m mit Zeilensummen von minv > 0 
 
@@ -158,7 +162,8 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		}
 		printResult();
 	}
-
+	
+	//for use loaded images as basis images
 	private void calculateTargetImages() {
 		mInv = new double[numPics][numPics];
 		int[][] pixelsBasis = new int[numPics][width*height];
