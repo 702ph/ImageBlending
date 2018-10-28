@@ -88,27 +88,25 @@ class Display extends JPanel implements MouseListener, KeyListener {
 			height = loadedTargetImages[0].getHeight();
 
 			
-			// Lesen der Pixeldaten　
-			//TODO: (from where!?!?) what is this? tragetPixels[] has no single value (null).
-			targetPixels = new int[numPics][width*height]; 
-	
+			// Lesen der Pixeldaten. set pixels into targetPixels[i] from loadedTargetImages[i] 
+			targetPixels = new int[numPics][width*height]; 	
 			for (int i = 0; i < numPics; i++) {		
 				
 				//fill black for debug
 				//Arrays.fill(targetPixels[i], 0xFF000000); //black
 				Arrays.fill(targetPixels[i], 0xFF00FF00); //green
 				
-				//set pixels into targetPixels[i] from targetImages[i] which were loaded from files
+				//set pixels into targetPixels[i] from loadedTargetImages[i] 
 				//targetImages[i].getRGB(0, 0, width, height, targetPixels[i], 0, width);
+				// oder
 				targetPixels[i] = loadedTargetImages[i].getRGB(0, 0, width, height, null, 0, width);
 				
 				//this doesn't work as intended -> 動いていることは動いている。ロードしたtargetImages[i]が緑に上書きされている。しかし、これは望んでいないこと。反対のことをやりたい。
 				//targetImages[i].setRGB(0, 0, width, height, targetPixels[i], 0, width);
 			}
-			System.out.println("hallo");			
 		}
 
-		else {	// read image data and use them for basis images //イメージを読み込んで、それをそのままBasisとして使用する。
+		else {	// read image data and use them for basis images 
 			basisImages = new BufferedImage[numPics];
 			try {
 				for (int i = 0; i < numPics; i++) {
