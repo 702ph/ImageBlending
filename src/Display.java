@@ -53,7 +53,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	Random rand = new Random(1112); 
 	
 	int targetPixels[][];  //if (doGenerate==true) then targetPixesl[][] are simply the loaded images
-	BufferedImage[] targetImages;
+	BufferedImage[] loadedTargetImages;
 	
 	private double[][][] basisPixels3;    // Speicher für Basisbilder [Bildnummer][Position][Kanal]
 	private BufferedImage[] basisImages;
@@ -62,7 +62,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	public Display() {
 		super();
 
-		targetImages = new BufferedImage[numPics];
+		loadedTargetImages = new BufferedImage[numPics];
 
 		this.setFocusable(true);
 		this.requestFocusInWindow();
@@ -77,15 +77,15 @@ class Display extends JPanel implements MouseListener, KeyListener {
 				for (int i = 0; i < numPics; i++) {
 					//String imageName = imageNames[i+imageSet*5];
 					//targetImages[i] = ImageIO.read(new File("pics/"+imageName));
-					targetImages[i] = ImageIO.read(new File("pics/"+imageNames[i+imageSet*5]));
+					loadedTargetImages[i] = ImageIO.read(new File("pics/"+imageNames[i+imageSet*5]));
 				}
 			} catch (IOException e) {
 				e.printStackTrace(); 
 			}				
 
 			//get width & height. it doesn't matter from which picture you get them.
-			width = targetImages[0].getWidth();
-			height = targetImages[0].getHeight();
+			width = loadedTargetImages[0].getWidth();
+			height = loadedTargetImages[0].getHeight();
 
 			
 			// Lesen der Pixeldaten　
@@ -100,7 +100,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 				
 				//set pixels into targetPixels[i] from targetImages[i] which were loaded from files
 				//targetImages[i].getRGB(0, 0, width, height, targetPixels[i], 0, width);
-				targetPixels[i] = targetImages[i].getRGB(0, 0, width, height, null, 0, width);
+				targetPixels[i] = loadedTargetImages[i].getRGB(0, 0, width, height, null, 0, width);
 				
 				//this doesn't work as intended -> 動いていることは動いている。ロードしたtargetImages[i]が緑に上書きされている。しかし、これは望んでいないこと。反対のことをやりたい。
 				//targetImages[i].setRGB(0, 0, width, height, targetPixels[i], 0, width);
@@ -160,8 +160,8 @@ class Display extends JPanel implements MouseListener, KeyListener {
 
 			for (int i = 0; i < targetPixels.length; i++) {
 				targetPixels[i] = blend3DDoubleToPixels(basisPixels3, m[i]);
-				targetImages[i] =  new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-				targetImages[i].setRGB(0, 0, width, height, targetPixels[i], 0, width);
+				loadedTargetImages[i] =  new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+				loadedTargetImages[i].setRGB(0, 0, width, height, targetPixels[i], 0, width);
 			}
 		}
 		printResult();
@@ -258,7 +258,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	
 	private void doDrawing(Graphics g) {
 
-		if (targetImages[0] == null) 
+		if (loadedTargetImages[0] == null) 
 			return;
 
 		int[] pixelsBlended;
@@ -281,7 +281,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		g2d.setStroke(new BasicStroke(5)); 
 
 		for (int i = 0; i < numPics; i++) {
-			g2d.drawImage(targetImages[i],   null, bx+ i*(height+bx), by);
+			g2d.drawImage(loadedTargetImages[i],   null, bx+ i*(height+bx), by);
 			g2d.drawImage(basisImages[i], null, bx+i*(height+bx), height+2*by);
 			if (wUser[i] > 0) g2d.drawRect(bx+i*(height+bx), height+2*by, height, height);
 		}
