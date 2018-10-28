@@ -124,17 +124,19 @@ class Display extends JPanel implements MouseListener, KeyListener {
 			findCombinations();   // finde eine Konfiguration m mit Zeilensummen von minv > 0 
 
 			int[][] pixelsBasis = new int[numPics][];
-			basisPixels3 = new double[numPics][][];
-			basisImages = new BufferedImage[numPics];    // Basisbilder zum Anzeigen
+			basisPixels3 = new double[numPics][][];  // basisPixels3[Bildnummer][Position][Kanal]
 
+			basisImages = new BufferedImage[numPics];    // Basisbilder zum Anzeigen
 			for (int i = 0; i < numPics; i++) {
 				basisPixels3[i] = blendPixelsTo3DDoubleImage(targetPixels, mInv[i]);
 				pixelsBasis[i]  = blendPixelsToPixels(targetPixels, mInv[i]);
-				basisImages[i] = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-				basisImages[i].setRGB(0, 0, width, height, pixelsBasis[i], 0, width);
+				
+				basisImages[i] = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB); 	//initialize BufferedImage for eachbasisImages[i]
+				basisImages[i].setRGB(0, 0, width, height, pixelsBasis[i], 0, width); //set RGB values from pixelsBasis[i] to the BufferedImages
 			}
 		}
-		else {	
+		
+		else {	//generate target from input images 
 			mInv = new double[numPics][numPics];
 			int[][] pixelsBasis = new int[numPics][width*height];
 			for (int i = 0; i < numPics; i++) {
@@ -176,7 +178,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 						success = false;
 				}
 			}
-		} while (!success && tries++ < 10000); // what is this? -> repeat 10000 times
+		} while (!success && tries++ < 10000); //just repeat 10000 times
 
 		if (!success) {
 			System.out.println("Impossible Settings, aborting");
