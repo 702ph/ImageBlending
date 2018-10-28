@@ -91,7 +91,6 @@ class Display extends JPanel implements MouseListener, KeyListener {
 			// Lesen der Pixeldaten　
 			//TODO: (from where!?!?) what is this? tragetPixels[] has no single value (null).
 			targetPixels = new int[numPics][width*height]; 
-			BufferedImage converter = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 	
 			for (int i = 0; i < numPics; i++) {		
 				
