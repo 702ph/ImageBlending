@@ -74,20 +74,8 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		grabFocus();
 
 		if (doGenerate == true) { 	// generate basis from input images
-			try {
-				//read image data and use them for target images
-				for (int i = 0; i < numPics; i++) {
-					//String imageName = imageNames[i+imageSet*5];
-					//targetImages[i] = ImageIO.read(new File("pics/"+imageName));
-					targetImagesFromeFiles[i] = ImageIO.read(new File("pics/"+imageNames[i+imageSet*5]));
-				}
-			} catch (IOException e) {
-				e.printStackTrace(); 
-			}				
 
-			//get width & height. it doesn't matter from which picture you get them.
-			width = targetImagesFromeFiles[0].getWidth();
-			height = targetImagesFromeFiles[0].getHeight();
+			loadTargetImageFromFile();
 
 
 			// Lesen der Pixeldaten. set pixels into targetPixels[i] from loadedTargetImages[i] 
@@ -126,6 +114,24 @@ class Display extends JPanel implements MouseListener, KeyListener {
 
 		//for both mode
 		//calculateBasisAndTargetImages();
+	}
+
+
+	private void loadTargetImageFromFile() {
+		try {
+			//read image data and use them for target images
+			for (int i = 0; i < numPics; i++) {
+				//String imageName = imageNames[i+imageSet*5];
+				//targetImages[i] = ImageIO.read(new File("pics/"+imageName));
+				targetImagesFromeFiles[i] = ImageIO.read(new File("pics/"+imageNames[i+imageSet*5]));
+			}
+		} catch (IOException e) {
+			e.printStackTrace(); 
+		}				
+
+		//get width & height. it doesn't matter from which picture you get them.
+		width = targetImagesFromeFiles[0].getWidth();
+		height = targetImagesFromeFiles[0].getHeight();
 	}
 
 
@@ -171,8 +177,8 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	}
 
 
-
-	private void calculateBasisAndTargetImages00() {
+	/*
+	private void calculateBasisAndTargetImages() {
 		if (doGenerate == true) { 	// generate basis from input images
 			findCombinations();   // finde eine Konfiguration m mit Zeilensummen von minv > 0 
 
@@ -212,6 +218,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		}
 		printResult();
 	}
+	*/
 
 
 	private void findCombinations() {
