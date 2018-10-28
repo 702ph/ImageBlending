@@ -76,43 +76,51 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		if (doGenerate == true) { 	// generate basis from input images
 
 			loadTargetImageFromFile();
-
-			// Lesen der Pixeldaten. set pixels into targetPixels[i] from loadedTargetImages[i] 
-			targetPixels = new int[numPics][width*height]; 	
-			for (int i = 0; i < numPics; i++) {		
-
-				//fill black for debug
-				//Arrays.fill(targetPixels[i], 0xFF000000); //black
-				Arrays.fill(targetPixels[i], 0xFF00FF00); //green
-
-				//set pixels into targetPixels[i] from loadedTargetImages[i] 
-				//targetImages[i].getRGB(0, 0, width, height, targetPixels[i], 0, width);
-				// oder
-				targetPixels[i] = targetImagesFromFile[i].getRGB(0, 0, width, height, null, 0, width);
-
-				//this doesn't work as intended -> 動いていることは動いている。ロードしたtargetImages[i]が緑に上書きされている。しかし、これは望んでいないこと。反対のことをやりたい。
-				//targetImages[i].setRGB(0, 0, width, height, targetPixels[i], 0, width);
-			}
+			createTargetPixels();
 			calculateBasisImages();
 		}
 
-		else {	// read image data and use them for basis images 
-			basisImages = new BufferedImage[numPics];
-			try {
-				for (int i = 0; i < numPics; i++) {
-					basisImages[i] = ImageIO.read(new File("pics/"+imageNames[i+imageSet*5]));
-				}
-			} catch (IOException e) { 
-				e.printStackTrace();
-			}
-			width = basisImages[0].getWidth();
-			height = basisImages[0].getHeight();
-			
+		else {	 	//use loaded images as basis images
+			loadBasisImageFromFile();
 			calculateTargetImages();
 		}
 
 		//for both mode
 		//calculateBasisAndTargetImages();
+	}
+
+
+	private void loadBasisImageFromFile() {
+		basisImages = new BufferedImage[numPics];
+		try {
+			for (int i = 0; i < numPics; i++) {
+				basisImages[i] = ImageIO.read(new File("pics/"+imageNames[i+imageSet*5]));
+			}
+		} catch (IOException e) { 
+			e.printStackTrace();
+		}
+		width = basisImages[0].getWidth();
+		height = basisImages[0].getHeight();
+	}
+
+
+	private void createTargetPixels() {
+		// Lesen der Pixeldaten. set pixels into targetPixels[i] from loadedTargetImages[i] 
+		targetPixels = new int[numPics][width*height]; 	
+		for (int i = 0; i < numPics; i++) {		
+
+			//fill black for debug
+			//Arrays.fill(targetPixels[i], 0xFF000000); //black
+			Arrays.fill(targetPixels[i], 0xFF00FF00); //green
+
+			//set pixels into targetPixels[i] from loadedTargetImages[i] 
+			//targetImages[i].getRGB(0, 0, width, height, targetPixels[i], 0, width);
+			// oder
+			targetPixels[i] = targetImagesFromFile[i].getRGB(0, 0, width, height, null, 0, width);
+
+			//this doesn't work as intended -> 動いていることは動いている。ロードしたtargetImages[i]が緑に上書きされている。しかし、これは望んでいないこと。反対のことをやりたい。
+			//targetImages[i].setRGB(0, 0, width, height, targetPixels[i], 0, width);
+		}
 	}
 
 
@@ -171,7 +179,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 			targetImagesFromFile[i] =  new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 			targetImagesFromFile[i].setRGB(0, 0, width, height, targetPixels[i], 0, width);
 		}
-		
+
 		printResult();
 	}
 
@@ -217,7 +225,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		}
 		printResult();
 	}
-	*/
+	 */
 
 
 	private void findCombinations() {
@@ -511,13 +519,13 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	public void keyPressed(KeyEvent e) {
 		System.out.println("Neue Kombination");
 		//calculateBasisAndTargetImages();
-		
+
 		if (doGenerate) {
 			calculateBasisImages(); 
 		} else {
 			calculateTargetImages();
 		}
-		
+
 		wUser = new double[numPics];
 		repaint();
 	}
