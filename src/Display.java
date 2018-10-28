@@ -76,7 +76,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		if (doGenerate == true) { 	// generate basis from input images
 
 			loadTargetImageFromFile();
-			createTargetPixels();
+			copyTargetImagePixelData();
 			
 			//findCombinations();   // finde eine Konfiguration m mit Zeilensummen von minv > 0 
 			calculateBasisImages();
@@ -107,7 +107,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	}
 
 
-	private void createTargetPixels() {
+	private void copyTargetImagePixelData() {
 		// Lesen der Pixeldaten. set pixels into targetPixels[i] from loadedTargetImages[i] 
 		targetPixels = new int[numPics][width*height]; 	
 		for (int i = 0; i < numPics; i++) {		
