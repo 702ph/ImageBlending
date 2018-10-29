@@ -117,7 +117,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 
 			//fill black for debug
 			//Arrays.fill(targetPixels[i], 0xFF000000); //black
-			Arrays.fill(targetPixels[i], 0xFF00FF00); //green
+			//Arrays.fill(targetPixels[i], 0xFF00FF00); //green
 
 			//set pixels into targetPixels[i] from loadedTargetImages[i] 
 			//targetImages[i].getRGB(0, 0, width, height, targetPixels[i], 0, width);
@@ -180,10 +180,13 @@ class Display extends JPanel implements MouseListener, KeyListener {
 			//basisImages[i].getRGB(0, 0, width, height, pixelsBasis[i], 0, width);
 			pixelsBasis[i] = basisImages[i].getRGB(0, 0, width, height, null, 0, width);	
 		}
+		
+		//for (int i=0; i<mInv.length; i++) {
+		//System.out.println(Arrays.toString(mInv[i]));
+		//}
 				
 		//can be initialized in constructor. does not have to be here.(not yet proved)
 		basisPixels3 = new double[numPics][][];
-		
 		for (int i = 0; i < numPics; i++) {
 			basisPixels3[i] = blendPixelsTo3DDoubleImage(pixelsBasis, mInv[i]);
 		}
@@ -192,7 +195,6 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		generateRandomM();
 
 		targetPixels = new int[numPics][width*height];
-
 		for (int i = 0; i < targetPixels.length; i++) {
 			targetPixels[i] = blend3DDoubleToPixels(basisPixels3, m[i]);
 			targetImages[i] =  new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -279,8 +281,10 @@ class Display extends JPanel implements MouseListener, KeyListener {
 			// numOnes mal eine 1 in jede Zeile von m setzen	
 			m = new double[numPics][numPics];
 			for (int i = 0; i < m.length; i++) {
+				
 				int extra = 0; //rand.nextInt(2);       // hier werden u.U. noch extra Einzen gesetzt 
-				System.out.println(extra);
+				//System.out.println(extra);
+				
 				for (int j = 0; j < numOnes+extra; j++) {
 					int index;
 					do {
@@ -369,36 +373,49 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		return pixels;
 	}
 
-	private double[][] blendPixelsTo3DDoubleImage(int[][] pixelsIn, double[] mInvParam) {
-		double[][] pixels = new double[pixelsIn[0].length][3]; // color channel, RGB->3
+	private double[][] blendPixelsTo3DDoubleImage(int[][] targetPixelsIn, double[] mInvParam) {
+		
+		System.out.println(Arrays.toString(mInvParam));
 
-		for (int i = 0; i < pixels.length; i++) {
-			double r = 0, g = 0, b = 0;
-
-			for (int j = 0; j < pixelsIn.length; j++) {
-				int cj = pixelsIn[j][i];
+		//targetPixelsIn[][] is same as targetPixels[numPics][width*height]
+		//pixelsOut has [width*height][color channels(RGB==3)]
+		double[][] pixelsOut = new double[targetPixelsIn[0].length][3];
+		int numberOfPixels = pixelsOut.length;
+		for (int position = 0; position < numberOfPixels; position++) {
+			
+			double rNew = 0, gNew = 0, bNew = 0;
+			int numberOfPictures = targetPixelsIn.length; // ==numPics
+			for (int picNum = 0; picNum < numberOfPictures; picNum++) {
+	
+				//extract each value from each color channel
+				int colorPix = targetPixelsIn[picNum][position];
+				double r = f((colorPix >> 16) & 0xFF);
+				double g = f((colorPix >>  8) & 0xFF);
+				double b = f((colorPix      ) & 0xFF);	
 				
-				//color channel
-				//double rj = f((cj >> 16) & 255);
-				//double gj = f((cj >>  8) & 255);
-				//double bj = f((cj      ) & 255);	
+				rNew += mInvParam[picNum] * r; 
+				gNew += mInvParam[picNum] * g;
+				bNew += mInvParam[picNum] * b;
 				
-				double rj = f((cj >> 16) & 0xFF);
-				double gj = f((cj >>  8) & 0xFF);
-				double bj = f((cj      ) & 0xFF);	
-
-				r += mInvParam[j]*rj;
-				g += mInvParam[j]*gj;
-				b += mInvParam[j]*bj;
 			}
 
-			pixels[i][0] = fi(r);
-			pixels[i][1] = fi(g);
-			pixels[i][2] = fi(b);
+			pixelsOut[position][0] = fi(rNew);
+			pixelsOut[position][1] = fi(gNew);
+			pixelsOut[position][2] = fi(bNew);
+			
 		}
-		return pixels;
+		return pixelsOut;
 	}
 
+	int zeroLevel = 128;
+	double f(double val) { //why does it have to be public??
+		return  val - zeroLevel;
+	}
+	double fi(double val) {
+		return  (val + zeroLevel);
+	}
+
+	
 	//not used
 	/*
 	private int[] blend3DDoubleToPixelsOrig(double[][][] pixelsIn, double[] w) {
@@ -461,11 +478,11 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		double max = Math.max(rMax, Math.max(gMax,  bMax));
 		double min = Math.min(rMin, Math.min(gMin,  bMin));
 
-		System.out.println("rMin, rMax, gMin, gMax, bMin, bMax");
-		System.out.println(rMin + "," + rMax + ", " + gMin + "," + gMax + ", " + bMin + "," + bMax );
+		//System.out.println("rMin, rMax, gMin, gMax, bMin, bMax");
+		//System.out.println(rMin + "," + rMax + ", " + gMin + "," + gMax + ", " + bMin + "," + bMax );
 
-		System.out.println("min,max");
-		System.out.println(min + "," + max);
+		//System.out.println("min,max");
+		//System.out.println(min + "," + max);
 
 		for (int i = 0; i < pixels.length; i++) {
 			double r = 0, g = 0, b = 0;
@@ -497,15 +514,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		return pixels;
 	}
 
-	int zeroLevel = 128;
-	double f(double val) {
-		return  val - zeroLevel;
-	}
-
-	double fi(double val) {
-		return  (val + zeroLevel);
-	}
-
+	
 
 	@Override
 	public void paintComponent(Graphics g) {
