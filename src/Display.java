@@ -369,7 +369,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		return pixels;
 	}
 
-	private double[][] blendPixelsTo3DDoubleImage(int[][] pixelsIn, double[] w) {
+	private double[][] blendPixelsTo3DDoubleImage(int[][] pixelsIn, double[] mInvParam) {
 		double[][] pixels = new double[pixelsIn[0].length][3]; // color channel, RGB->3
 
 		for (int i = 0; i < pixels.length; i++) {
@@ -387,9 +387,9 @@ class Display extends JPanel implements MouseListener, KeyListener {
 				double gj = f((cj >>  8) & 0xFF);
 				double bj = f((cj      ) & 0xFF);	
 
-				r += w[j]*rj;
-				g += w[j]*gj;
-				b += w[j]*bj;
+				r += mInvParam[j]*rj;
+				g += mInvParam[j]*gj;
+				b += mInvParam[j]*bj;
 			}
 
 			pixels[i][0] = fi(r);
