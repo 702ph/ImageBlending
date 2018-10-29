@@ -54,12 +54,14 @@ class Display extends JPanel implements MouseListener, KeyListener {
 
 	Random rand = new Random(1112); 
 
-	int targetPixels[][];  //if (doGenerate==true) then targetPixesl[][] are simply the loaded images
+	//when (doGenerate==true) then targetPixesls[][] is copy of the loaded image from file
+	int targetPixels[][];  
 	BufferedImage[] targetImages;
 
-	private double[][][] basisPixels3;    // Speicher für Basisbilder [Bildnummer][Position][Kanal]
-	private BufferedImage[] basisImages;
-
+	private double[][][] basisPixels3;    // Speicher für Basisbilder: [Bildnummer][Position(coordinate)][Color Channel RGB]
+	private BufferedImage[] basisImages; //
+	
+	
 	//constructor
 	public Display() {
 		super();
@@ -106,7 +108,8 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		height = basisImages[0].getHeight();
 	}
 
-
+	
+	//targetPixels[][] is used for Basis Image calculation
 	private void copyTargetImagePixelData() {
 		// Lesen der Pixeldaten. set pixels into targetPixels[i] from loadedTargetImages[i] 
 		targetPixels = new int[numPics][width*height]; 	
@@ -163,18 +166,29 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		printResult();
 	}
 	
+	
 	//for use loaded images as basis images
 	private void calculateTargetImages() {
 		mInv = new double[numPics][numPics];
 		int[][] pixelsBasis = new int[numPics][width*height];
+		
+		//copy loaded basis image data (basiImages[i]) into pixelsBasis[i]
 		for (int i = 0; i < numPics; i++) {
 			mInv[i][i] = 1; //1./numOnes;
-			basisPixels3 = new double[numPics][][];
-			basisImages[i].getRGB(0, 0, width, height, pixelsBasis[i], 0, width);
+			//basisPixels3 = new double[numPics][][];
+			
+			//basisImages[i].getRGB(0, 0, width, height, pixelsBasis[i], 0, width);
+			pixelsBasis[i] = basisImages[i].getRGB(0, 0, width, height, null, 0, width);	
 		}
-		for (int i = 0; i < numPics; i++) 
+				
+		//can be initialized in constructor. does not have to be here.(not yet proved)
+		basisPixels3 = new double[numPics][][];
+		
+		for (int i = 0; i < numPics; i++) {
 			basisPixels3[i] = blendPixelsTo3DDoubleImage(pixelsBasis, mInv[i]);
+		}
 
+		
 		generateRandomM();
 
 		targetPixels = new int[numPics][width*height];
@@ -187,6 +201,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 
 		printResult();
 	}
+	
 
 
 	/*
@@ -355,16 +370,22 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	}
 
 	private double[][] blendPixelsTo3DDoubleImage(int[][] pixelsIn, double[] w) {
-		double[][] pixels = new double[pixelsIn[0].length][3];
+		double[][] pixels = new double[pixelsIn[0].length][3]; // color channel, RGB->3
 
 		for (int i = 0; i < pixels.length; i++) {
 			double r = 0, g = 0, b = 0;
 
 			for (int j = 0; j < pixelsIn.length; j++) {
 				int cj = pixelsIn[j][i];
-				double rj = f((cj >> 16) & 255);
-				double gj = f((cj >>  8) & 255);
-				double bj = f((cj      ) & 255);	
+				
+				//color channel
+				//double rj = f((cj >> 16) & 255);
+				//double gj = f((cj >>  8) & 255);
+				//double bj = f((cj      ) & 255);	
+				
+				double rj = f((cj >> 16) & 0xFF);
+				double gj = f((cj >>  8) & 0xFF);
+				double bj = f((cj      ) & 0xFF);	
 
 				r += w[j]*rj;
 				g += w[j]*gj;
