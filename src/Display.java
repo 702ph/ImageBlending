@@ -172,18 +172,23 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		mInv = new double[numPics][numPics];
 		int[][] pixelsBasis = new int[numPics][width*height];
 		
-		//copy loaded basis image data (basiImages[i]) into pixelsBasis[i]
+		//create identity matrix
 		for (int i = 0; i < numPics; i++) {
 			mInv[i][i] = 1; //1./numOnes;
+		}
+		//debug
+		//for (int i=0; i<mInv.length; i++) {
+		//	System.out.println(Arrays.toString(mInv[i]));
+		//}
+
+		//copy loaded basis image data from (basiImages[i]) to pixelsBasis[i]
+		for (int i = 0; i < numPics; i++) {
 			//basisPixels3 = new double[numPics][][];
 			
 			//basisImages[i].getRGB(0, 0, width, height, pixelsBasis[i], 0, width);
 			pixelsBasis[i] = basisImages[i].getRGB(0, 0, width, height, null, 0, width);	
 		}
 		
-		//for (int i=0; i<mInv.length; i++) {
-		//System.out.println(Arrays.toString(mInv[i]));
-		//}
 				
 		//can be initialized in constructor. does not have to be here.(not yet proved)
 		basisPixels3 = new double[numPics][][];
