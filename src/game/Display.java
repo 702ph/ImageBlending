@@ -48,8 +48,8 @@ public class Display extends JPanel implements MouseListener, KeyListener {
 
 	};
 
-	int width, height;
-	double[][] m;    // richtige Kombination der Basisbilder (0/1) 
+    int width, height;
+	double[][] mCorrect;    // richtige Kombination der Basisbilder (0/1) 
 	double[][] mInv; // Kombination der Eingangsbilder zur Erzeugung der Basisbilder
 	double [] wUser = new double[numPics];; // Kombination des Nutzers (selected pictures by mouse click)
 	//double [] wUser = new double[4];
@@ -166,8 +166,12 @@ public class Display extends JPanel implements MouseListener, KeyListener {
 			
 			basisPixels3[i] = blendPixelsTo3DDoubleImage(targetPixels, mInv[i]);
 			
+			//this blendPixelsToPixels accepts only int[][]
 			pixelsBasis[i]  = blendPixelsToPixels(targetPixels, mInv[i]);
-
+			
+			//thus this doesn't work. it accepts double[][]
+			//pixelsBasis[i] = blend3DDoubleToPixels(targetPixels, mInv[i]);
+			
 			basisImages[i] = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB); 	//initialize BufferedImage for eachbasisImages[i]
 			basisImages[i].setRGB(0, 0, width, height, pixelsBasis[i], 0, width); //set RGB values from pixelsBasis[i] to the BufferedImages
 		}
@@ -195,15 +199,15 @@ public class Display extends JPanel implements MouseListener, KeyListener {
 		//can be initialized in constructor. does not have to be here.(not yet proved)
 		basisPixels3 = new double[numPics][][];
 		for (int i = 0; i < numPics; i++) {
-			basisPixels3[i] = blendPixelsTo3DDoubleImage(pixelsBasis, mInv[i]);
-			//basisPixels3[i] = pixelToRGB(pixelsBasis,i);
+			//basisPixels3[i] = blendPixelsTo3DDoubleImage(pixelsBasis, mInv[i]);
+			basisPixels3[i] = pixelToRGB(pixelsBasis,i);
 		}
 
 		generateRandomM();
 
 		targetPixels = new int[numPics][width*height];
 		for (int i = 0; i < targetPixels.length; i++) {
-			targetPixels[i] = blend3DDoubleToPixels(basisPixels3, m[i]);
+			targetPixels[i] = blend3DDoubleToPixels(basisPixels3, mCorrect[i]);
 			
 			targetImages[i] =  new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 			targetImages[i].setRGB(0, 0, width, height, targetPixels[i], 0, width);
@@ -285,7 +289,7 @@ public class Display extends JPanel implements MouseListener, KeyListener {
 			generateRandomM();
 
 			success = true;
-			mInv = Inverse.invert(m);
+			mInv = Inverse.invert(mCorrect);
 			for (int i = 0; i < mInv.length; i++) {
 				for (int j = 0; j < mInv[i].length; j++) {
 					double val = mInv[i][j];
@@ -307,8 +311,8 @@ public class Display extends JPanel implements MouseListener, KeyListener {
 		boolean success;		
 		do {
 			// numOnes mal eine 1 in jede Zeile von m setzen	
-			m = new double[numPics][numPics];
-			for (int i = 0; i < m.length; i++) {
+			mCorrect = new double[numPics][numPics];
+			for (int i = 0; i < mCorrect.length; i++) {
 
 				int extra = 0; //rand.nextInt(2);       // hier werden u.U. noch extra Einzen gesetzt 
 				//System.out.println(extra);
@@ -318,8 +322,8 @@ public class Display extends JPanel implements MouseListener, KeyListener {
 					do {
 						index = rand.nextInt(numPics);
 					}
-					while (m[i][index] == 1);
-					m[i][index] = 1;
+					while (mCorrect[i][index] == 1);
+					mCorrect[i][index] = 1;
 				}
 			}		
 			success = true;
@@ -328,7 +332,7 @@ public class Display extends JPanel implements MouseListener, KeyListener {
 				for (int j = i+1; j <numPics; j++)  {
 					boolean same = true; // identische Kombinationen/Zeilen vermeiden
 					for (int k = 0; k <numPics; k++) 
-						if (m[i][k] != m[j][k])
+						if (mCorrect[i][k] != mCorrect[j][k])
 							same = false;
 					if (same) {
 						success = false;
@@ -346,9 +350,9 @@ public class Display extends JPanel implements MouseListener, KeyListener {
 
 	private void printResult() {
 		System.out.println("Lösung:");
-		for (int i = 0; i < m.length; i++) {
-			for (int j = 0; j < m[i].length; j++) {
-				System.out.printf("%6.2f", m[i][j]);
+		for (int i = 0; i < mCorrect.length; i++) {
+			for (int j = 0; j < mCorrect[i].length; j++) {
+				System.out.printf("%6.2f", mCorrect[i][j]);
 			}
 			System.out.println();
 		}
