@@ -18,7 +18,7 @@ import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
 
- public class Display extends JPanel implements MouseListener, KeyListener {
+public class Display extends JPanel implements MouseListener, KeyListener {
 	private static final long serialVersionUID = 1L;
 
 	// Parameter
@@ -62,12 +62,12 @@ import javax.swing.JPanel;
 
 	private double[][][] basisPixels3;    // Speicher für Basisbilder: [Bildnummer][Position(coordinate)][Color Channel RGB]
 	private BufferedImage[] basisImages; //
-	
+
 	//constructor for JUnit Test
 	public Display(String message) {
 		System.out.println(message);
 	}
-	
+
 	//constructor
 	public Display() {
 		super();
@@ -85,11 +85,11 @@ import javax.swing.JPanel;
 
 			loadTargetImageFromFile();
 			copyTargetImagePixelData();
-			
+
 			//findCombinations();   // finde eine Konfiguration m mit Zeilensummen von minv > 0 
 			calculateBasisImages();
 			//printResult();
-		
+
 		} else {	 	//use loaded images as basis images
 			loadBasisImageFromFile();
 			calculateTargetImages();
@@ -100,7 +100,7 @@ import javax.swing.JPanel;
 		//calculateBasisAndTargetImages();
 	}
 
-	
+
 	private void loadBasisImageFromFile() {
 		basisImages = new BufferedImage[numPics];
 		try {
@@ -114,7 +114,7 @@ import javax.swing.JPanel;
 		height = basisImages[0].getHeight();
 	}
 
-	
+
 	//targetPixels[][] is used for Basis Image calculation
 	private void copyTargetImagePixelData() {
 		// Lesen der Pixeldaten. set pixels into targetPixels[i] from loadedTargetImages[i] 
@@ -153,7 +153,7 @@ import javax.swing.JPanel;
 		height = targetImages[0].getHeight();
 	}
 
-	
+
 	//for generate basis from input images
 	private void calculateBasisImages() {
 		findCombinations();   // finde eine Konfiguration m mit Zeilensummen von minv > 0 
@@ -163,7 +163,9 @@ import javax.swing.JPanel;
 
 		basisImages = new BufferedImage[numPics];    // Basisbilder zum Anzeigen
 		for (int i = 0; i < numPics; i++) {
+			
 			basisPixels3[i] = blendPixelsTo3DDoubleImage(targetPixels, mInv[i]);
+			
 			pixelsBasis[i]  = blendPixelsToPixels(targetPixels, mInv[i]);
 
 			basisImages[i] = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB); 	//initialize BufferedImage for eachbasisImages[i]
@@ -171,40 +173,41 @@ import javax.swing.JPanel;
 		}
 		printResult();
 	}
-	
-	
+
+
 	//for use loaded images as basis images
 	private void calculateTargetImages() {
 		//mInv = new double[numPics][numPics];
-		int[][] pixelsBasis = new int[numPics][width*height];
-		
+
 		//create identity matrix
 		createIdentityMatrix();
 
-
 		//copy loaded basis image data from (basiImages[i]) to pixelsBasis[i]
+		int[][] pixelsBasis = new int[numPics][width*height];
 		for (int i = 0; i < numPics; i++) {
 			//basisPixels3 = new double[numPics][][];
-			
+
 			//basisImages[i].getRGB(0, 0, width, height, pixelsBasis[i], 0, width);
 			pixelsBasis[i] = basisImages[i].getRGB(0, 0, width, height, null, 0, width);	
 		}
-		
-				
+
+
 		//can be initialized in constructor. does not have to be here.(not yet proved)
 		basisPixels3 = new double[numPics][][];
 		for (int i = 0; i < numPics; i++) {
 			basisPixels3[i] = blendPixelsTo3DDoubleImage(pixelsBasis, mInv[i]);
+			//basisPixels3[i] = pixelToRGB(pixelsBasis,i);
 		}
 
-		
 		generateRandomM();
 
 		targetPixels = new int[numPics][width*height];
 		for (int i = 0; i < targetPixels.length; i++) {
 			targetPixels[i] = blend3DDoubleToPixels(basisPixels3, m[i]);
+			
 			targetImages[i] =  new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 			targetImages[i].setRGB(0, 0, width, height, targetPixels[i], 0, width);
+			//targetImages[i].setRGB(0, 0, width, height, basisPixels3[i], 0, width);
 		}
 
 		printResult();
@@ -214,21 +217,21 @@ import javax.swing.JPanel;
 	public void createIdentityMatrix() {
 		//debug
 		//System.out.println(numPics);
-		
+
 		mInv = new double[numPics][numPics];
 		for (int i = 0; i < numPics; i++) {
 			mInv[i][i] = 1; //1./numOnes;
 		}
-		
+
 		//debug
 		/*
 		System.out.println(numPics);
 		for (int i=0; i<mInv.length; i++) {
 			System.out.println(Arrays.toString(mInv[i]));
 		}
-		*/
+		 */
 	}
-	
+
 
 
 	/*
@@ -306,10 +309,10 @@ import javax.swing.JPanel;
 			// numOnes mal eine 1 in jede Zeile von m setzen	
 			m = new double[numPics][numPics];
 			for (int i = 0; i < m.length; i++) {
-				
+
 				int extra = 0; //rand.nextInt(2);       // hier werden u.U. noch extra Einzen gesetzt 
 				//System.out.println(extra);
-				
+
 				for (int j = 0; j < numOnes+extra; j++) {
 					int index;
 					do {
@@ -320,6 +323,7 @@ import javax.swing.JPanel;
 				}
 			}		
 			success = true;
+			
 			for (int i = 0; i < numPics; i++) {
 				for (int j = i+1; j <numPics; j++)  {
 					boolean same = true; // identische Kombinationen/Zeilen vermeiden
@@ -399,38 +403,77 @@ import javax.swing.JPanel;
 	}
 
 	private double[][] blendPixelsTo3DDoubleImage(int[][] targetPixelsIn, double[] mInvParam) {
-		
+
+		System.out.println("blendPixelsTo3DDoubleImage():");
 		System.out.println(Arrays.toString(mInvParam));
 
-		//targetPixelsIn[][] is same as targetPixels[numPics][width*height]
+		//targetPixelsIn[][] == targetPixels[numPics][width*height]
 		//pixelsOut has [width*height][color channels(RGB==3)]
-		double[][] pixelsOut = new double[targetPixelsIn[0].length][3];
+		//double[][] pixelsOut = new double[targetPixelsIn[0].length][3];
+		double[][] pixelsOut = new double[width*height][3];
+
 		int numberOfPixels = pixelsOut.length;
 		for (int position = 0; position < numberOfPixels; position++) {
-			
-			double rNew = 0, gNew = 0, bNew = 0;
-			int numberOfPictures = targetPixelsIn.length; // ==numPics
+
+			double rNew = 0, gNew = 0, bNew = 0;			
+			int numberOfPictures = targetPixelsIn.length; // == same as numPics, isn't it??
 			for (int picNum = 0; picNum < numberOfPictures; picNum++) {
-	
+
 				//extract each value from each color channel
 				int colorPix = targetPixelsIn[picNum][position];
 				double r = f((colorPix >> 16) & 0xFF);
 				double g = f((colorPix >>  8) & 0xFF);
 				double b = f((colorPix      ) & 0xFF);	
-				
+
+				//1. loop: [1.0, 0.0, 0.0, 0.0]  -> 1; 0; 0; 0
+				//2. loop: [0.0, 1.0, 0.0, 0.0]  usw
 				rNew += mInvParam[picNum] * r; 
 				gNew += mInvParam[picNum] * g;
 				bNew += mInvParam[picNum] * b;
 				
+				//rNew = r;
+				//gNew = g;
+				//bNew = b;
 			}
 
 			pixelsOut[position][0] = fi(rNew);
 			pixelsOut[position][1] = fi(gNew);
 			pixelsOut[position][2] = fi(bNew);
+		}
+		return pixelsOut;
+	}
+
+	private double[][] pixelToRGB(int[][] targetPixelsIn, int picNo) {
+
+		System.out.println("colorToRGB():");
+		System.out.println(picNo);
+		//System.out.println(Arrays.toString(mInvParam));
+
+		//targetPixelsIn[][] == targetPixels[numPics][width*height]
+		//pixelsOut has [width*height][color channels(RGB==3)]
+		//double[][] pixelsOut = new double[targetPixelsIn[0].length][3];
+		double[][] pixelsOut = new double[width*height][3];
+
+		int numberOfPixels = pixelsOut.length;
+		for (int position = 0; position < numberOfPixels; position++) {
+			
+			int colorPix = targetPixelsIn[picNo][position];
+			double r = (colorPix >> 16) &0xFF;
+			double g = (colorPix >> 8)  &0xFF;
+			double b = (colorPix)       &0xFF;
+			
+			pixelsOut[position][0] = r;
+			pixelsOut[position][1] = g;
+			pixelsOut[position][2] = b;
+			
+			//pixelsOut[position][0] = (colorPix >> 16);
+			//pixelsOut[position][1] = (colorPix >>  8);
+			//pixelsOut[position][2] = (colorPix      );
 			
 		}
 		return pixelsOut;
 	}
+
 
 	int zeroLevel = 128;
 	double f(double val) { //why does it have to be public??
@@ -440,7 +483,7 @@ import javax.swing.JPanel;
 		return  (val + zeroLevel);
 	}
 
-	
+
 	//not used
 	/*
 	private int[] blend3DDoubleToPixelsOrig(double[][][] pixelsIn, double[] w) {
@@ -470,7 +513,15 @@ import javax.swing.JPanel;
 
 
 	private int[] blend3DDoubleToPixels(double[][][] pixelsIn, double[] w) {
-		int[] pixels = new int[pixelsIn[0].length];
+		
+		//w == combination of pictures, by user and or program calculated
+		
+		System.out.println("blend3DDoubleToPixels():");
+		System.out.println(Arrays.toString(w));
+		
+		//int[] pixels = new int[pixelsIn[0].length];
+		//↑ same ↓
+		int[] pixels = new int[width*height];
 
 		double rMin = 255, rMax = 0;
 		double gMin = 255, gMax = 0;
@@ -487,21 +538,36 @@ import javax.swing.JPanel;
 				r += w[j]*rj; 
 				g += w[j]*gj;
 				b += w[j]*bj;
+				//r += rj; 
+				//g += gj;
+				//b += bj;
 			}
+			
 			r = fi(r);
 			g = fi(g);
 			b = fi(b);
 
+			//what is this? for statistic?
 			if (r > rMax) rMax = r;
 			if (r < rMin) rMin = r;
 			if (g > gMax) gMax = g;
 			if (g < gMin) gMin = g;
 			if (b > bMax) bMax = b;
 			if (b < bMin) bMin = b;
+
+			
+			r = Math.min(Math.max(0, r ), 255);
+			g = Math.min(Math.max(0, g ), 255);
+			b = Math.min(Math.max(0, b ), 255);
+
+			pixels[i] = 0xFF000000 | ((int)r <<16) | ((int)g << 8) | (int)b;
+			
 		}
 
-		double max = Math.max(rMax, Math.max(gMax,  bMax));
-		double min = Math.min(rMin, Math.min(gMin,  bMin));
+
+
+		//double max = Math.max(rMax, Math.max(gMax,  bMax));
+		//double min = Math.min(rMin, Math.min(gMin,  bMin));
 
 		//System.out.println("rMin, rMax, gMin, gMax, bMin, bMax");
 		//System.out.println(rMin + "," + rMax + ", " + gMin + "," + gMax + ", " + bMin + "," + bMax );
@@ -509,6 +575,8 @@ import javax.swing.JPanel;
 		//System.out.println("min,max");
 		//System.out.println(min + "," + max);
 
+
+		
 		for (int i = 0; i < pixels.length; i++) {
 			double r = 0, g = 0, b = 0;
 
@@ -525,9 +593,9 @@ import javax.swing.JPanel;
 			g = fi(g);
 			b = fi(b);
 
-			//			r = (r-min)*255/(max-min);
-			//			g = (g-min)*255/(max-min);
-			//			b = (b-min)*255/(max-min);
+			//r = (r-min)*255/(max-min);
+			//g = (g-min)*255/(max-min);
+			//b = (b-min)*255/(max-min);
 
 			r = Math.min(Math.max(0, r ), 255);
 			g = Math.min(Math.max(0, g ), 255);
@@ -535,11 +603,15 @@ import javax.swing.JPanel;
 
 			pixels[i] = 0xFF000000 | ((int)r <<16) | ((int)g << 8) | (int)b;
 		}
+		 
 
 		return pixels;
 	}
 
-	
+	private boolean checkIdentity(int[] a, int[] b) {
+		return a.equals(b);
+	}
+
 
 	@Override
 	public void paintComponent(Graphics g) {
@@ -580,8 +652,8 @@ import javax.swing.JPanel;
 	public double[][] getmInv(){
 		return mInv;
 	}
-	
-	
+
+
 
 	@Override
 	public void keyPressed(KeyEvent e) {
