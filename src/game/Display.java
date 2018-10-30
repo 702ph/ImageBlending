@@ -1,3 +1,4 @@
+package game;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -16,7 +17,8 @@ import java.util.Random;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
-class Display extends JPanel implements MouseListener, KeyListener {
+
+ public class Display extends JPanel implements MouseListener, KeyListener {
 	private static final long serialVersionUID = 1L;
 
 	// Parameter
@@ -61,6 +63,10 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	private double[][][] basisPixels3;    // Speicher für Basisbilder: [Bildnummer][Position(coordinate)][Color Channel RGB]
 	private BufferedImage[] basisImages; //
 	
+	//constructor for JUnit Test
+	public Display(String message) {
+		System.out.println(message);
+	}
 	
 	//constructor
 	public Display() {
@@ -94,7 +100,7 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		//calculateBasisAndTargetImages();
 	}
 
-
+	
 	private void loadBasisImageFromFile() {
 		basisImages = new BufferedImage[numPics];
 		try {
@@ -169,17 +175,12 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	
 	//for use loaded images as basis images
 	private void calculateTargetImages() {
-		mInv = new double[numPics][numPics];
+		//mInv = new double[numPics][numPics];
 		int[][] pixelsBasis = new int[numPics][width*height];
 		
 		//create identity matrix
-		for (int i = 0; i < numPics; i++) {
-			mInv[i][i] = 1; //1./numOnes;
-		}
-		//debug
-		//for (int i=0; i<mInv.length; i++) {
-		//	System.out.println(Arrays.toString(mInv[i]));
-		//}
+		createIdentityMatrix();
+
 
 		//copy loaded basis image data from (basiImages[i]) to pixelsBasis[i]
 		for (int i = 0; i < numPics; i++) {
@@ -207,6 +208,25 @@ class Display extends JPanel implements MouseListener, KeyListener {
 		}
 
 		printResult();
+	}
+
+
+	public void createIdentityMatrix() {
+		//debug
+		//System.out.println(numPics);
+		
+		mInv = new double[numPics][numPics];
+		for (int i = 0; i < numPics; i++) {
+			mInv[i][i] = 1; //1./numOnes;
+		}
+		
+		//debug
+		/*
+		System.out.println(numPics);
+		for (int i=0; i<mInv.length; i++) {
+			System.out.println(Arrays.toString(mInv[i]));
+		}
+		*/
 	}
 	
 
@@ -554,6 +574,14 @@ class Display extends JPanel implements MouseListener, KeyListener {
 	public int getNumPics() {
 		return numPics;
 	}
+	public void setNumPics(int n) {
+		numPics=n;
+	}
+	public double[][] getmInv(){
+		return mInv;
+	}
+	
+	
 
 	@Override
 	public void keyPressed(KeyEvent e) {
