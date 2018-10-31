@@ -28,7 +28,8 @@ public class Display extends JPanel implements MouseListener, KeyListener {
 
 	// true: generiere Basisbilder, die die gelesenen Eingangsbilder erzeugen  //読み込みと同時に2段目に合成画像を生成する。それらをBasis Bilderとして用いる。重ね合わせることで本来の入力画像と同様の画像を得られる。入力画像は1段目に表示される。
 	// false: verwende die Bilder als Basisbilder und erzeuge Kombinatioen //読み込んだ画像を2段めのBasic Bilderとしてそのまま使用し、1段目は生成する。
-	boolean doGenerate = false;
+	boolean doGenerate = true
+			;
 
 	// 0.51 .. 2.01 // wie stark darf ein Bild in der Linearkombination verwendet werden //default==2
 	double maxWeight = 2; //how does it work? looks like no differences
@@ -156,17 +157,38 @@ public class Display extends JPanel implements MouseListener, KeyListener {
 
 	//for generate basis from input images
 	private void calculateBasisImages() {
+		
 		findCombinations();   // finde eine Konfiguration m mit Zeilensummen von minv > 0 
+				
+		//これでもうごく！！！！
+		
+		//generateRandomM();
+		//mInv = Inverse.invert(mOrig);
 
+		for(int i=0; i<mCorrect.length;i++) {
+			System.out.println(Arrays.toString(mCorrect[i]));
+		}
+		for(int i=0; i<mInv.length;i++) {
+			System.out.println(Arrays.toString(mInv[i]));
+		} 
+		
+		
+		//これはうごかん。
+		//mInv = mCorrect;
+		
+		
 		int[][] pixelsBasis = new int[numPics][];
 		basisPixels3 = new double[numPics][][];  // basisPixels3[Bildnummer][Position][Kanal]
 
 		basisImages = new BufferedImage[numPics];    // Basisbilder zum Anzeigen
 		for (int i = 0; i < numPics; i++) {
 			
+			//TOO: basisPixels3 これどこで使われてる？？？ →これでadditive mischungの作業をしている。
 			basisPixels3[i] = blendPixelsTo3DDoubleImage(targetPixels, mInv[i]);
+			// or, simply separate channel -> NO. at basis generation targetPixels have to be mixed.
+			//basisPixels3[i] = pixelToRGB(targetPixels,i);
 			
-			//this blendPixelsToPixels accepts only int[][]
+			//this blendPixelsToPixels accepts only int[][]　→これは表示用。このあと加工はされない。
 			pixelsBasis[i]  = blendPixelsToPixels(targetPixels, mInv[i]);
 			
 			//thus this doesn't work. it accepts double[][]
@@ -184,14 +206,14 @@ public class Display extends JPanel implements MouseListener, KeyListener {
 		//mInv = new double[numPics][numPics];
 
 		//create identity matrix
-		createIdentityMatrix();
+		mInv = createIdentityMatrix();
 
 		//copy loaded basis image data from (basiImages[i]) to pixelsBasis[i]
 		int[][] pixelsBasis = new int[numPics][width*height];
 		for (int i = 0; i < numPics; i++) {
 			//basisPixels3 = new double[numPics][][];
 
-			//basisImages[i].getRGB(0, 0, width, height, pixelsBasis[i], 0, width);
+			basisImages[i].getRGB(0, 0, width, height, pixelsBasis[i], 0, width);
 			pixelsBasis[i] = basisImages[i].getRGB(0, 0, width, height, null, 0, width);	
 		}
 
@@ -199,8 +221,9 @@ public class Display extends JPanel implements MouseListener, KeyListener {
 		//can be initialized in constructor. does not have to be here.(not yet proved)
 		basisPixels3 = new double[numPics][][];
 		for (int i = 0; i < numPics; i++) {
-			//basisPixels3[i] = blendPixelsTo3DDoubleImage(pixelsBasis, mInv[i]);
-			basisPixels3[i] = pixelToRGB(pixelsBasis,i);
+			basisPixels3[i] = blendPixelsTo3DDoubleImage(pixelsBasis, mInv[i]);
+			// or, simply separate channel↓
+			//basisPixels3[i] = pixelToRGB(pixelsBasis,i);
 		}
 
 		generateRandomM();
@@ -217,69 +240,17 @@ public class Display extends JPanel implements MouseListener, KeyListener {
 		printResult();
 	}
 
+	// it is public for JUnit
+	public double[][] createIdentityMatrix() {
 
-	public void createIdentityMatrix() {
-		//debug
-		//System.out.println(numPics);
-
-		mInv = new double[numPics][numPics];
+		double [][] mIdentity = new double[numPics][numPics];
 		for (int i = 0; i < numPics; i++) {
-			mInv[i][i] = 1; //1./numOnes;
+			mIdentity[i][i] = 1; //1./numOnes;
 		}
-
-		//debug
-		/*
-		System.out.println(numPics);
-		for (int i=0; i<mInv.length; i++) {
-			System.out.println(Arrays.toString(mInv[i]));
-		}
-		 */
+		return mIdentity;
 	}
 
 
-
-	/*
-	private void calculateBasisAndTargetImages() {
-		if (doGenerate == true) { 	// generate basis from input images
-			findCombinations();   // finde eine Konfiguration m mit Zeilensummen von minv > 0 
-
-			int[][] pixelsBasis = new int[numPics][];
-			basisPixels3 = new double[numPics][][];  // basisPixels3[Bildnummer][Position][Kanal]
-
-			basisImages = new BufferedImage[numPics];    // Basisbilder zum Anzeigen
-			for (int i = 0; i < numPics; i++) {
-				basisPixels3[i] = blendPixelsTo3DDoubleImage(targetPixels, mInv[i]);
-				pixelsBasis[i]  = blendPixelsToPixels(targetPixels, mInv[i]);
-
-				basisImages[i] = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB); 	//initialize BufferedImage for eachbasisImages[i]
-				basisImages[i].setRGB(0, 0, width, height, pixelsBasis[i], 0, width); //set RGB values from pixelsBasis[i] to the BufferedImages
-			}
-		}
-
-		else {	//generate target from input images 
-			mInv = new double[numPics][numPics];
-			int[][] pixelsBasis = new int[numPics][width*height];
-			for (int i = 0; i < numPics; i++) {
-				mInv[i][i] = 1; //1./numOnes;
-				basisPixels3 = new double[numPics][][];
-				basisImages[i].getRGB(0, 0, width, height, pixelsBasis[i], 0, width);
-			}
-			for (int i = 0; i < numPics; i++) 
-				basisPixels3[i] = blendPixelsTo3DDoubleImage(pixelsBasis, mInv[i]);
-
-			generateRandomM();
-
-			targetPixels = new int[numPics][width*height];
-
-			for (int i = 0; i < targetPixels.length; i++) {
-				targetPixels[i] = blend3DDoubleToPixels(basisPixels3, m[i]);
-				targetImagesFromeFiles[i] =  new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-				targetImagesFromeFiles[i].setRGB(0, 0, width, height, targetPixels[i], 0, width);
-			}
-		}
-		printResult();
-	}
-	 */
 
 
 	private void findCombinations() {
@@ -290,16 +261,21 @@ public class Display extends JPanel implements MouseListener, KeyListener {
 
 			success = true;
 			mInv = Inverse.invert(mCorrect);
+			
 			for (int i = 0; i < mInv.length; i++) {
 				for (int j = 0; j < mInv[i].length; j++) {
 					double val = mInv[i][j];
-					if (Double.isInfinite(val) || Double.isNaN(val)) 
+					//System.out.println(val + ", ");
+					
+					if (Double.isInfinite(val) || Double.isNaN(val)) {
 						success = false; // wenn Rang zu klein ist
-					else if (Math.abs(val) > maxWeight) // kein Bild stärker als mit maxContribution gewichten
+					} else {if (Math.abs(val) > maxWeight) // kein Bild stärker als mit maxContribution gewichten
 						success = false;
+					}
+					
 				}
 			}
-		} while (!success && tries++ < 10000); //just repeat 10000 times
+		} while (!success && tries++ < 10000); //just repeat 10000(default) times if it's failed
 
 		if (!success) {
 			System.out.println("Impossible Settings, aborting");
@@ -380,10 +356,10 @@ public class Display extends JPanel implements MouseListener, KeyListener {
 	private int[] blendPixelsToPixels(int[][] pixelsIn, double[] w) {
 		int[] pixels = new int[pixelsIn[0].length];
 
-		for (int i = 0; i < pixels.length; i++) {
+		for (int i = 0; i < pixels.length; i++) { //position
 			double r = 0, g = 0, b = 0;
 
-			for (int j = 0; j < pixelsIn.length; j++) {
+			for (int j = 0; j < pixelsIn.length; j++) { //for each picture
 				int cj = pixelsIn[j][i];
 				double rj = f((cj >> 16) & 255);
 				double gj = f((cj >>  8) & 255);
@@ -560,11 +536,11 @@ public class Display extends JPanel implements MouseListener, KeyListener {
 			if (b < bMin) bMin = b;
 
 			
-			r = Math.min(Math.max(0, r ), 255);
-			g = Math.min(Math.max(0, g ), 255);
-			b = Math.min(Math.max(0, b ), 255);
+			//r = Math.min(Math.max(0, r ), 255);
+			//g = Math.min(Math.max(0, g ), 255);
+			//b = Math.min(Math.max(0, b ), 255);
 
-			pixels[i] = 0xFF000000 | ((int)r <<16) | ((int)g << 8) | (int)b;
+			//pixels[i] = 0xFF000000 | ((int)r <<16) | ((int)g << 8) | (int)b;
 			
 		}
 

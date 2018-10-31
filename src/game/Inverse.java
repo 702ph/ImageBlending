@@ -19,7 +19,7 @@ public class Inverse {
 				a[i][j] = input.nextDouble();
 
 		//debug
-		System.out.println(Arrays.toString(a));
+		//System.out.println(Arrays.toString(a));
 		double d[][] = invert(a);
 
 		
@@ -71,6 +71,10 @@ public class Inverse {
 				x[j][i] /= a[index[j]][j];
 			}
 		}
+		
+		//debug
+		
+		
 		return x;
 	}
 
